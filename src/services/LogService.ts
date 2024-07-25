@@ -58,48 +58,11 @@ export class LogService {
     this.onLogsReceived = config.logsReceivedHandle;
   }
 
-  public connect(): void {
-    this.WSConnection = new WebSocket('ws://test.enter-systems.ru/');
-
-    this.WSConnection.addEventListener('message', (evt) => {
-      const eventData: string = evt.data;
-
-      if (eventData) {
-        this.handleSocketMessage(JSON.parse(eventData));
-      }
-    });
-
-    this.WSConnection.addEventListener('error', (evt) => {
-      this.handleSocketError(evt);
-    });
-    this.WSConnection.addEventListener('close', () => {
-      this.handleSocketClose();
-    });
-    this.WSConnection.addEventListener('open', () => {
-      this.handleSocketOpen();
-    });
-  }
-
-  public disconnect(): void {
-    if (this.WSConnection) {
-      this.WSConnection.close();
-    }
-
-    this.unsentMessage = [];
-    this.subscribes = [];
-
-    this.handleSocketClose();
-  }
-
-  public isReadyStateWS(): boolean {
-    return !!this.WSConnection && this.WSConnection.readyState === WebSocket.OPEN;
-  }
-
   private updateUnsentMessage(message: ISocketOutgoingMessage): void {
     if (
-      !this.unsentMessage.some(
-        (unsentMessage) => JSON.stringify(unsentMessage) === JSON.stringify(message),
-      )
+        !this.unsentMessage.some(
+            (unsentMessage) => JSON.stringify(unsentMessage) === JSON.stringify(message),
+        )
     ) {
       this.unsentMessage.push(message);
     }
@@ -107,8 +70,8 @@ export class LogService {
 
   private updateSubscribes(uri: string, isActive: boolean): void {
     if (
-      (this.subscribes.includes(uri) && isActive) ||
-      (!this.subscribes.includes(uri) && !isActive)
+        (this.subscribes.includes(uri) && isActive) ||
+        (!this.subscribes.includes(uri) && !isActive)
     ) {
       return;
     }
@@ -279,6 +242,10 @@ export class LogService {
     this.clearConnection();
   }
 
+  private heartbeat(): void {
+    this.sendMessage([20, this.heartbeatCount]);
+  }
+
   public auth(): void {
     if (this.authInProgress || !this.callId) {
       return;
@@ -291,8 +258,8 @@ export class LogService {
     }
 
     this.sendMessage(
-      [2, this.callId, `${baseUriUrl}${uriList.login}`, this.username, this.password],
-      true,
+        [2, this.callId, `${baseUriUrl}${uriList.login}`, this.username, this.password],
+        true,
     );
   }
 
@@ -320,15 +287,48 @@ export class LogService {
     this.sendMessage(message);
   }
 
-  private heartbeat(): void {
-    this.sendMessage([20, this.heartbeatCount]);
-  }
-
   public subscribeForLogs(): void {
     this.subscribe([5, `${baseUriUrl}${uriList.logs}`]);
   }
 
   public unsubscribeForLogs(): void {
     this.unsubscribe([6, `${baseUriUrl}${uriList.logs}`]);
+  }
+
+  public connect(): void {
+    this.WSConnection = new WebSocket('ws://test.enter-systems.ru/');
+
+    this.WSConnection.addEventListener('message', (evt) => {
+      const eventData: string = evt.data;
+
+      if (eventData) {
+        this.handleSocketMessage(JSON.parse(eventData));
+      }
+    });
+
+    this.WSConnection.addEventListener('error', (evt) => {
+      this.handleSocketError(evt);
+    });
+    this.WSConnection.addEventListener('close', () => {
+      this.handleSocketClose();
+    });
+    this.WSConnection.addEventListener('open', () => {
+      this.handleSocketOpen();
+    });
+  }
+
+  public disconnect(): void {
+    if (this.WSConnection) {
+      this.WSConnection.close();
+    }
+
+    this.unsentMessage = [];
+    this.subscribes = [];
+
+    this.handleSocketClose();
+  }
+
+  public isReadyStateWS(): boolean {
+    return !!this.WSConnection && this.WSConnection.readyState === WebSocket.OPEN;
   }
 }
