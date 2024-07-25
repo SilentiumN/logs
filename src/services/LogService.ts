@@ -137,7 +137,8 @@ export class LogService {
     const isAuth = !!data && 'Token' in data;
 
     if (isAuth) {
-      this.token = data.token;
+      const token =  typeof data.Token === 'string' ? data.Token : ''
+      this.token = token;
       this.isAuthenticated = true;
       this.authInProgress = false;
       this.onAfterAuth();
