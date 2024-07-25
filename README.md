@@ -280,3 +280,28 @@ _Принимает следующие аргументы:_
 
 ### isReadyStateWS
 Метод для проверки, готов ли сокет принимать сообщения от пользователя.
+
+# Example usage
+```
+const test = new LogService({
+    username: 'enter',
+    password: 'A505a',
+    subscribeDataReceivedHandle: ({ uri, eventData }) => {
+      console.log(uri, eventData, 'subscribeDataReceivedHandle');
+    },
+    subscribeDataErrorHandle: ({ uri }) => {
+      console.log(uri, 'subscribeDataErrorHandle');
+    },
+    errorHandle: ({ uri, errorMessage, additionalErrorDetails }) => {
+      console.log(uri, errorMessage, additionalErrorDetails, 'errorHandle');
+    },
+    resultHandle: ({ result }) => {
+      console.log(result, 'resultHandle');
+    },
+    logsReceivedHandle: ({ isInit, logs }) => {
+      console.log(isInit, logs, 'logsReceivedHandle');
+    },
+  });
+  test.connect();
+  test.subscribeForLogs();
+```
