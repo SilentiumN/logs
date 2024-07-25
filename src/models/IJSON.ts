@@ -3,7 +3,7 @@ type JSONValue =
     | number
     | boolean
     | JSONObject
-    | JSONArray;
+    | Array<JSONValue>;
 
 export interface JSONObject {
     [x: string]: JSONValue;

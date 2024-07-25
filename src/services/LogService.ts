@@ -27,7 +27,7 @@ export class LogService {
   private isAuthenticated: boolean;
   private readonly username: ILogServiceConfig['username'];
   private readonly password: ILogServiceConfig['password'];
-  private callId: string;
+  private sessionId: string;
   private unsentMessage: ISocketOutgoingMessage[];
   private intervalHeartbeatId: number | null;
   private heartbeatCount: number;
@@ -45,7 +45,7 @@ export class LogService {
     this.isAuthenticated = false;
     this.username = config.username;
     this.password = config.password;
-    this.callId = '';
+    this.sessionId = '';
     this.unsentMessage = [];
     this.intervalHeartbeatId = null;
     this.heartbeatCount = 0;
@@ -101,9 +101,9 @@ export class LogService {
   }
 
   private onWelcome(message: IWelcome): void {
-    const [messageType, callId, versionProtocol, serverName] = message;
+    const [messageType, sessionId, versionProtocol, serverName] = message;
 
-    this.callId = callId;
+    this.sessionId = sessionId;
 
     this.auth();
   }
@@ -143,7 +143,7 @@ export class LogService {
       this.onAfterAuth();
     }
 
-    if (isAuth && this.onResult) {
+    if (isAuth && !!this.onResult) {
       this.onResult({ result: data });
     }
   }
@@ -157,7 +157,7 @@ export class LogService {
       this.auth();
     }
 
-    if (this.onError) {
+    if (!!this.onError) {
       this.onError({
         uri: errorUri,
         errorMessage: errorDesc,
@@ -174,7 +174,7 @@ export class LogService {
       case true:
         this.updateSubscribes(uri, false);
 
-        if (this.onSubscribeError) {
+        if (!!this.onSubscribeError) {
           this.onSubscribeError({ uri });
         }
         break;
@@ -219,11 +219,23 @@ export class LogService {
     }
   }
 
+  private generateCallId():string {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < 16) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter += 1;
+    }
+    return result;
+  }
+
   private clearConnection(): void {
     this.WSConnection = null;
     this.isAuthenticated = false;
     this.token = '';
-    this.callId = '';
+    this.sessionId = '';
     this.authInProgress = false;
     this.heartbeatCount = 0;
     this.clearIntervalHeartbeat();
@@ -247,25 +259,25 @@ export class LogService {
   }
 
   public auth(): void {
-    if (this.authInProgress || !this.callId) {
+    if (this.authInProgress || !this.sessionId) {
       return;
     }
 
     this.authInProgress = true;
     if (this.token) {
-      this.sendMessage([2, this.callId, `${baseUriUrl}${uriList.loginByToken}`, this.token], true);
+      this.sendMessage([2, this.generateCallId(), `${baseUriUrl}${uriList.loginByToken}`, this.token], true);
       return;
     }
 
     this.sendMessage(
-        [2, this.callId, `${baseUriUrl}${uriList.login}`, this.username, this.password],
+        [2, this.generateCallId(), `${baseUriUrl}${uriList.login}`, this.username, this.password],
         true,
     );
   }
 
   public logout(): void {
     if (this.isAuthenticated) {
-      this.sendMessage([2, this.callId, `${baseUriUrl}${uriList.logout}`]);
+      this.sendMessage([2, this.generateCallId(), `${baseUriUrl}${uriList.logout}`]);
       this.token = '';
       this.isAuthenticated = false;
     }
